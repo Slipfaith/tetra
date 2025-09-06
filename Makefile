@@ -3,18 +3,28 @@ CC=gcc
 CFLAGS=-Wall -Wextra -std=c11
 LDFLAGS=-lncurses
 
-SRC_GAME=$(wildcard src/brick_game/tetris/*.c)
-SRC_CLI=$(wildcard src/gui/cli/*.c)
+SRC_GAME=src/brick_game/tetris/tetris.c
+SRC_CLI=src/gui/cli/main.c
 OBJ_GAME=$(SRC_GAME:.c=.o)
 OBJ_CLI=$(SRC_CLI:.c=.o)
+LIB=libtetris.a
+TEST_SRC=tests/test_tetris.c
+TEST_OBJ=$(TEST_SRC:.c=.o)
+TEST_BIN=tests/test.out
 
 all: tetris
 
-%.o: %.c
+$(OBJ_GAME): $(SRC_GAME)
 ;$(CC) $(CFLAGS) -c $< -o $@
 
-tetris: $(OBJ_GAME) $(OBJ_CLI)
-;$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(OBJ_CLI): $(SRC_CLI)
+;$(CC) $(CFLAGS) -c $< -o $@
+
+$(LIB): $(OBJ_GAME)
+;ar rcs $@ $^
+
+tetris: $(OBJ_CLI) $(LIB)
+;$(CC) $(CFLAGS) -o $@ $(OBJ_CLI) $(LIB) $(LDFLAGS)
 
 install:
 ;@echo "Install is not implemented"
@@ -23,7 +33,8 @@ uninstall:
 ;@echo "Uninstall is not implemented"
 
 clean:
-;rm -f $(OBJ_GAME) $(OBJ_CLI) tetris
+;rm -f $(OBJ_GAME) $(OBJ_CLI) $(TEST_OBJ) $(TEST_BIN) $(LIB) tetris *.gcno *.gcda *.info
+;rm -rf report
 
 dvi:
 ;@echo "DVI target is not implemented"
@@ -31,10 +42,17 @@ dvi:
 dist:
 ;@echo "Dist target is not implemented"
 
-test:
-;@echo "No tests provided"
+test: $(LIB) $(TEST_OBJ)
+;$(CC) $(CFLAGS) $(TEST_OBJ) $(LIB) -lm -lpthread -o $(TEST_BIN)
+;./$(TEST_BIN)
 
-gcov_report:
-;@echo "Coverage not implemented"
+$(TEST_OBJ): $(TEST_SRC)
+;$(CC) $(CFLAGS) -c $< -o $@
+
+gcov_report: CFLAGS += -fprofile-arcs -ftest-coverage
+gcov_report: clean $(LIB) $(TEST_OBJ)
+;$(CC) $(CFLAGS) $(TEST_OBJ) $(LIB) -lm -lpthread -o $(TEST_BIN)
+;./$(TEST_BIN)
+;gcov $(SRC_GAME)
 
 .PHONY: all install uninstall clean dvi dist test gcov_report
