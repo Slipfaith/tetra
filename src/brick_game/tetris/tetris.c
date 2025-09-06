@@ -250,6 +250,25 @@ GameInfo_t updateCurrentState(void) {
       if (state != STATE_GAMEOVER) state = STATE_MOVE;
       break;
     case STATE_MOVE:
+      // Detect overlap of the active piece with other blocks (e.g., when the
+      // top row is forcibly filled) and terminate the game immediately.
+      int overlap = 0;
+      for (int i = 0; i < 4 && !overlap; ++i)
+        for (int j = 0; j < 4; ++j)
+          if (shapes[game.current_shape][game.rotation][i][j]) {
+            int nx = game.current_x + j;
+            int ny = game.current_y + i;
+            if (game.field[ny][nx] &&
+                game.field[ny][nx] != game.current_shape + 1) {
+              overlap = 1;
+              break;
+            }
+          }
+      if (overlap) {
+        game.game_over = 1;
+        state = STATE_GAMEOVER;
+        break;
+      }
       if (last_action == Left) {
         try_move(-1, 0);
       } else if (last_action == Right) {
@@ -301,6 +320,7 @@ GameInfo_t updateCurrentState(void) {
     case STATE_GAMEOVER:
       if (last_action == Start) {
         reset_game();
+        state = STATE_START;
         spawn_piece();
         if (state != STATE_GAMEOVER) {
           state = STATE_MOVE;
