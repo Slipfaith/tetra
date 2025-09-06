@@ -36,6 +36,7 @@ int main(void) {
 
   setFallSpeed(20);
   userInput(ACT_START);
+  int quit_requested = 0;
   while (1) {
     int ch = getch();
     if (ch != ERR) {
@@ -57,6 +58,7 @@ int main(void) {
           break;
         case 'q':
           userInput(ACT_QUIT);
+          quit_requested = 1;
           break;
         case 'p':
         case 'P':
@@ -69,10 +71,12 @@ int main(void) {
     if (g.game_over) break;
     usleep(50000);
   }
-  nodelay(stdscr, FALSE);
-  mvprintw(FIELD_HEIGHT + 1, 0, "Press any key to exit");
-  refresh();
-  getch();
+  if (!quit_requested) {
+    nodelay(stdscr, FALSE);
+    mvprintw(FIELD_HEIGHT + 1, 0, "Press any key to exit");
+    refresh();
+    getch();
+  }
   endwin();
   return 0;
 }
