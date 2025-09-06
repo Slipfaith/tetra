@@ -95,6 +95,31 @@ void pause_functionality(void) {
   assert(g.current_y == y + 1);
 }
 
+void level_and_speed(void) {
+  userInput(ACT_QUIT); updateCurrentState();
+  userInput(ACT_QUIT); updateCurrentState();
+  userInput(ACT_START); updateCurrentState();
+  updateCurrentState();
+  GameInfo *gp = getGame();
+  int start_y = gp->current_y;
+  for (int i = 0; i < 19; ++i) updateCurrentState();
+  GameInfo g = *getGame();
+  assert(g.current_y == start_y);  // not enough ticks at level 1
+
+  gp->score = 600;
+  updateCurrentState();
+  int y_after_level = gp->current_y;
+  for (int i = 0; i < 18; ++i) updateCurrentState();
+  g = *getGame();
+  assert(g.level == 2);
+  assert(g.current_y == y_after_level + 1);  // moved faster at level 2
+
+  gp->score = 6000;  // large score
+  updateCurrentState();
+  g = *getGame();
+  assert(g.level <= 10);  // level capped at 10
+}
+
 int main(void) {
   start_and_spawn();
   move_and_rotate();
@@ -102,5 +127,6 @@ int main(void) {
   game_over_state();
   score_and_highscore();
   pause_functionality();
+  level_and_speed();
   return 0;
 }

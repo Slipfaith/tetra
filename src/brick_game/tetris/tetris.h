@@ -40,6 +40,7 @@ typedef struct {
   int score;      // current score
   int high_score; // maximum stored score
   int paused;     // 1 when game is paused
+  int level;      // current level (1-10)
 } GameInfo;
 
 // Receive user input. The action will be processed on next updateCurrentState()
