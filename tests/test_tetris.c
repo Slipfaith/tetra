@@ -4,16 +4,16 @@
 
 // Helper to return the game to its initial state
 static void reset_state(void) {
-  userInput(ACT_QUIT);
+  userInput(Terminate, false);
   updateCurrentState();
-  userInput(ACT_QUIT);
+  userInput(Terminate, false);
   updateCurrentState();
 }
 
 START_TEST(start_and_spawn) {
   reset_state();
-  userInput(ACT_START);
-  GameInfo g = updateCurrentState();
+  userInput(Start, false);
+  GameInfo_t g = updateCurrentState();
   ck_assert_int_eq(g.field[0][4], 1);
   ck_assert_int_eq(g.field[3][4], 1);
 }
@@ -21,11 +21,11 @@ END_TEST
 
 START_TEST(move_and_rotate) {
   reset_state();
-  userInput(ACT_START); updateCurrentState();
-  userInput(ACT_LEFT);
-  GameInfo g = updateCurrentState();
+  userInput(Start, false); updateCurrentState();
+  userInput(Left, false);
+  GameInfo_t g = updateCurrentState();
   ck_assert_int_eq(g.field[1][3], 1);
-  userInput(ACT_ROTATE);
+  userInput(Action, false);
   g = updateCurrentState();
   ck_assert_int_eq(g.field[1][2], 1);
   ck_assert_int_eq(g.field[1][5], 1);
@@ -34,13 +34,13 @@ END_TEST
 
 START_TEST(line_clear) {
   reset_state();
-  userInput(ACT_START); updateCurrentState();
+  userInput(Start, false); updateCurrentState();
   GameInfo *gp = getGame();
   for (int j = 0; j < FIELD_WIDTH; ++j)
     if (j < 3 || j > 6) gp->field[FIELD_HEIGHT - 1][j] = 7;
-  userInput(ACT_ROTATE); updateCurrentState();
-  userInput(ACT_DROP);
-  GameInfo g = updateCurrentState();
+  userInput(Action, false); updateCurrentState();
+  userInput(Down, false);
+  GameInfo_t g = updateCurrentState();
   int empty = 1;
   for (int j = 0; j < FIELD_WIDTH; ++j)
     empty &= (g.field[FIELD_HEIGHT - 1][j] == 0);
@@ -50,29 +50,29 @@ END_TEST
 
 START_TEST(game_over_state) {
   reset_state();
-  userInput(ACT_START); updateCurrentState();
+  userInput(Start, false); updateCurrentState();
   GameInfo *gp = getGame();
   for (int j = 0; j < FIELD_WIDTH; ++j) gp->field[0][j] = 7;
-  GameInfo g = updateCurrentState();
-  ck_assert_int_eq(g.game_over, 1);
+  updateCurrentState();
+  ck_assert_int_eq(getGame()->game_over, 1);
 }
 END_TEST
 
 START_TEST(score_and_highscore) {
   reset_state();
   remove("highscore.dat");
-  userInput(ACT_START); updateCurrentState();
+  userInput(Start, false); updateCurrentState();
   GameInfo *gp = getGame();
   for (int j = 0; j < FIELD_WIDTH; ++j)
     if (j < 3 || j > 6) gp->field[FIELD_HEIGHT - 1][j] = 7;
-  userInput(ACT_ROTATE); updateCurrentState();
-  userInput(ACT_DROP);
-  GameInfo g = updateCurrentState();
+  userInput(Action, false); updateCurrentState();
+  userInput(Down, false);
+  GameInfo_t g = updateCurrentState();
   ck_assert_int_eq(g.score, 100);
   ck_assert_int_eq(g.high_score, 100);
   updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_START); updateCurrentState();
+  userInput(Terminate, false); updateCurrentState();
+  userInput(Start, false); updateCurrentState();
   g = updateCurrentState();
   ck_assert_int_eq(g.score, 0);
   ck_assert_int_eq(g.high_score, 100);
@@ -81,27 +81,30 @@ END_TEST
 
 START_TEST(pause_functionality) {
   reset_state();
-  userInput(ACT_START); updateCurrentState();
-  GameInfo g = updateCurrentState();
-  int x = g.current_x;
-  int y = g.current_y;
-  userInput(ACT_PAUSE); updateCurrentState();
-  userInput(ACT_LEFT);
+  userInput(Start, false); updateCurrentState();
+  GameInfo_t g = updateCurrentState();
+  GameInfo *gs = getGame();
+  int x = gs->current_x;
+  int y = gs->current_y;
+  userInput(Pause, false); updateCurrentState();
+  userInput(Left, false);
   g = updateCurrentState();
-  ck_assert_int_eq(g.paused, 1);
-  ck_assert_int_eq(g.current_x, x);
-  ck_assert_int_eq(g.current_y, y);
-  userInput(ACT_PAUSE); updateCurrentState();
-  userInput(ACT_DOWN);
+  gs = getGame();
+  ck_assert_int_eq(g.pause, 1);
+  ck_assert_int_eq(gs->current_x, x);
+  ck_assert_int_eq(gs->current_y, y);
+  userInput(Pause, false); updateCurrentState();
+  userInput(Down, true);
   g = updateCurrentState();
-  ck_assert_int_eq(g.paused, 0);
-  ck_assert_int_eq(g.current_y, y + 1);
+  gs = getGame();
+  ck_assert_int_eq(g.pause, 0);
+  ck_assert_int_eq(gs->current_y, y + 1);
 }
 END_TEST
 
 START_TEST(level_and_speed) {
   reset_state();
-  userInput(ACT_START); updateCurrentState();
+  userInput(Start, false); updateCurrentState();
   GameInfo *gp = getGame();
   int start_y = gp->current_y;
   for (int i = 0; i < 19; ++i) updateCurrentState();

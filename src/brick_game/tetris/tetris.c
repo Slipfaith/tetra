@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 static GameInfo game;
-static UserAction last_action = ACT_NONE;
+static int last_action = -1;
+static bool last_hold = false;
 static GameState state = STATE_START;
 static int next_shape = 0;
 static const char *score_file = "highscore.dat";
@@ -229,15 +230,19 @@ static int clear_lines(void) {
   return cleared;
 }
 
-void userInput(UserAction action) { last_action = action; }
+void userInput(UserAction_t action, bool hold) {
+  last_action = action;
+  last_hold = hold;
+}
 
-GameInfo updateCurrentState(void) {
+GameInfo_t updateCurrentState(void) {
   update_level();
   switch (state) {
     case STATE_START:
-      if (last_action == ACT_START) {
+      if (last_action == Start) {
         reset_game();
-        state = STATE_SPAWN;
+        spawn_piece();
+        if (state != STATE_GAMEOVER) state = STATE_MOVE;
       }
       break;
     case STATE_SPAWN:
@@ -245,30 +250,30 @@ GameInfo updateCurrentState(void) {
       if (state != STATE_GAMEOVER) state = STATE_MOVE;
       break;
     case STATE_MOVE:
-      if (last_action == ACT_LEFT) {
+      if (last_action == Left) {
         try_move(-1, 0);
-      } else if (last_action == ACT_RIGHT) {
+      } else if (last_action == Right) {
         try_move(1, 0);
-      } else if (last_action == ACT_ROTATE) {
+      } else if (last_action == Action) {
         try_rotate();
-      } else if (last_action == ACT_DOWN) {
-        if (!try_move(0, 1)) {
-          place_piece();
+      } else if (last_action == Down) {
+        if (last_hold) {
+          if (!try_move(0, 1)) {
+            place_piece();
+            clear_lines();
+            if (state != STATE_GAMEOVER) state = STATE_SPAWN;
+          }
+        } else {
+          hard_drop();
           clear_lines();
           if (state != STATE_GAMEOVER) state = STATE_SPAWN;
         }
         fall_counter = 0;
         break;
-      } else if (last_action == ACT_DROP) {
-        hard_drop();
-        clear_lines();
-        if (state != STATE_GAMEOVER) state = STATE_SPAWN;
-        fall_counter = 0;
-        break;
-      } else if (last_action == ACT_PAUSE) {
+      } else if (last_action == Pause) {
         state = STATE_PAUSE;
         break;
-      } else if (last_action == ACT_QUIT) {
+      } else if (last_action == Terminate) {
         game.game_over = 1;
         state = STATE_GAMEOVER;
         break;
@@ -285,25 +290,41 @@ GameInfo updateCurrentState(void) {
       }
       break;
     case STATE_PAUSE:
-      if (last_action == ACT_PAUSE) {
+      if (last_action == Pause) {
         state = STATE_MOVE;
         fall_counter = 0;
-      } else if (last_action == ACT_QUIT) {
+      } else if (last_action == Terminate) {
         game.game_over = 1;
         state = STATE_GAMEOVER;
       }
       break;
     case STATE_GAMEOVER:
-      if (last_action == ACT_START) {
+      if (last_action == Start) {
         reset_game();
-        state = STATE_SPAWN;
-        game.game_over = 0;
+        spawn_piece();
+        if (state != STATE_GAMEOVER) {
+          state = STATE_MOVE;
+          game.game_over = 0;
+        }
       }
       break;
   }
   game.paused = (state == STATE_PAUSE);
-  last_action = ACT_NONE;
-  return game;
+  last_action = -1;
+
+  static int *field_ptrs[FIELD_HEIGHT];
+  static int *next_ptrs[4];
+  static GameInfo_t info;
+  for (int i = 0; i < FIELD_HEIGHT; ++i) field_ptrs[i] = game.field[i];
+  for (int i = 0; i < 4; ++i) next_ptrs[i] = game.next[i];
+  info.field = field_ptrs;
+  info.next = next_ptrs;
+  info.score = game.score;
+  info.high_score = game.high_score;
+  info.level = game.level;
+  info.speed = fall_delay;
+  info.pause = game.paused;
+  return info;
 }
 
 __attribute__((constructor)) static void init_module(void) { reset_game(); }
