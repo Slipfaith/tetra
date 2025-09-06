@@ -17,6 +17,8 @@ static void draw_game(const GameInfo *g) {
                g->next[i][j] ? "[]" : "  ");
     }
   }
+  mvprintw(6, FIELD_WIDTH * 2 + 2, "Score: %d", g->score);
+  mvprintw(7, FIELD_WIDTH * 2 + 2, "High: %d", g->high_score);
   if (g->game_over) mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "GAME OVER");
   refresh();
 }
