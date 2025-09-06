@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "../../brick_game/tetris/tetris.h"
 
-static void draw_game(const GameInfo *g) {
+static void draw_game(const GameInfo_t *g) {
   clear();
   for (int i = 0; i < FIELD_HEIGHT; ++i) {
     for (int j = 0; j < FIELD_WIDTH; ++j) {
@@ -20,9 +20,9 @@ static void draw_game(const GameInfo *g) {
   mvprintw(6, FIELD_WIDTH * 2 + 2, "Score: %d", g->score);
   mvprintw(7, FIELD_WIDTH * 2 + 2, "High: %d", g->high_score);
   mvprintw(8, FIELD_WIDTH * 2 + 2, "Level: %d", g->level);
-  if (g->game_over)
+  if (getGame()->game_over)
     mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "GAME OVER");
-  else if (g->paused)
+  else if (g->pause)
     mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "PAUSED");
   refresh();
 }
@@ -36,7 +36,7 @@ int main(void) {
   timeout(0);
 
   setFallSpeed(20);
-  userInput(ACT_START);
+  userInput(Start, false);
   int quit_requested = 0;
   int pause_pressed = 0;
   while (1) {
@@ -44,34 +44,30 @@ int main(void) {
     if (ch != ERR) {
       switch (ch) {
         case KEY_LEFT:
-          userInput(ACT_LEFT);
+          userInput(Left, false);
           pause_pressed = 0;
           break;
         case KEY_RIGHT:
-          userInput(ACT_RIGHT);
+          userInput(Right, false);
           pause_pressed = 0;
           break;
         case KEY_DOWN:
-          userInput(ACT_DOWN);
+          userInput(Down, false);
           pause_pressed = 0;
           break;
         case ' ':
-          userInput(ACT_ROTATE);
-          pause_pressed = 0;
-          break;
-        case '\n':
-          userInput(ACT_DROP);
+          userInput(Action, false);
           pause_pressed = 0;
           break;
         case 'q':
-          userInput(ACT_QUIT);
+          userInput(Terminate, false);
           quit_requested = 1;
           pause_pressed = 0;
           break;
         case 'p':
         case 'P':
           if (!pause_pressed) {
-            userInput(ACT_PAUSE);
+            userInput(Pause, false);
             pause_pressed = 1;
           }
           break;
@@ -82,9 +78,9 @@ int main(void) {
     } else {
       pause_pressed = 0;
     }
-    GameInfo g = updateCurrentState();
+    GameInfo_t g = updateCurrentState();
     draw_game(&g);
-    if (g.game_over) break;
+    if (getGame()->game_over) break;
     usleep(50000);
   }
   if (!quit_requested) {
