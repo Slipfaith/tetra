@@ -19,7 +19,10 @@ static void draw_game(const GameInfo *g) {
   }
   mvprintw(6, FIELD_WIDTH * 2 + 2, "Score: %d", g->score);
   mvprintw(7, FIELD_WIDTH * 2 + 2, "High: %d", g->high_score);
-  if (g->game_over) mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "GAME OVER");
+  if (g->game_over)
+    mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "GAME OVER");
+  else if (g->paused)
+    mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "PAUSED");
   refresh();
 }
 
@@ -31,6 +34,7 @@ int main(void) {
   nodelay(stdscr, TRUE);
   timeout(0);
 
+  setFallSpeed(20);
   userInput(ACT_START);
   while (1) {
     int ch = getch();
@@ -53,6 +57,10 @@ int main(void) {
           break;
         case 'q':
           userInput(ACT_QUIT);
+          break;
+        case 'p':
+        case 'P':
+          userInput(ACT_PAUSE);
           break;
       }
     }

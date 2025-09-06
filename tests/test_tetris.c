@@ -21,8 +21,8 @@ void move_and_rotate(void) {
   assert(g.field[1][3] == 1);
   userInput(ACT_ROTATE);
   g = updateCurrentState();
-  assert(g.field[3][2] == 1);
-  assert(g.field[3][5] == 1);
+  assert(g.field[1][2] == 1);
+  assert(g.field[1][5] == 1);
 }
 
 void line_clear(void) {
@@ -77,11 +77,30 @@ void score_and_highscore(void) {
   assert(g.high_score == 100);
 }
 
+void pause_functionality(void) {
+  userInput(ACT_QUIT); updateCurrentState();
+  userInput(ACT_QUIT); updateCurrentState();
+  userInput(ACT_START); updateCurrentState();
+  updateCurrentState();
+  GameInfo g = updateCurrentState();
+  int x = g.current_x;
+  int y = g.current_y;
+  userInput(ACT_PAUSE); updateCurrentState();
+  userInput(ACT_LEFT); g = updateCurrentState();
+  assert(g.paused == 1);
+  assert(g.current_x == x && g.current_y == y);
+  userInput(ACT_PAUSE); updateCurrentState();
+  userInput(ACT_DOWN); g = updateCurrentState();
+  assert(g.paused == 0);
+  assert(g.current_y == y + 1);
+}
+
 int main(void) {
   start_and_spawn();
   move_and_rotate();
   line_clear();
   game_over_state();
   score_and_highscore();
+  pause_functionality();
   return 0;
 }

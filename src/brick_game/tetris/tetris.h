@@ -24,6 +24,7 @@ typedef enum {
   STATE_START,
   STATE_SPAWN,
   STATE_MOVE,
+  STATE_PAUSE,
   STATE_GAMEOVER
 } GameState;
 
@@ -38,6 +39,7 @@ typedef struct {
   int game_over;  // 1 when game finished
   int score;      // current score
   int high_score; // maximum stored score
+  int paused;     // 1 when game is paused
 } GameInfo;
 
 // Receive user input. The action will be processed on next updateCurrentState()
@@ -48,5 +50,8 @@ GameInfo updateCurrentState(void);
 
 // Direct access to internal game state (useful for tests)
 GameInfo *getGame(void);
+
+// Set number of update ticks between automatic downward moves
+void setFallSpeed(int delay);
 
 #endif  // TETRIS_H
