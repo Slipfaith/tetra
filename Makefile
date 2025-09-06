@@ -2,8 +2,6 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -std=c11
 LDFLAGS=-lncurses
-CHECK_CFLAGS=$(shell pkg-config --cflags check 2>/dev/null)
-CHECK_LIBS=$(shell pkg-config --libs check 2>/dev/null)
 
 SRC_GAME=src/brick_game/tetris/tetris.c
 SRC_CLI=src/gui/cli/main.c
@@ -45,15 +43,15 @@ dist:
 ;@echo "Dist target is not implemented"
 
 test: $(LIB) $(TEST_OBJ)
-;$(CC) $(CFLAGS) $(CHECK_CFLAGS) $(TEST_OBJ) $(LIB) $(CHECK_LIBS) -o $(TEST_BIN)
+;$(CC) $(CFLAGS) $(TEST_OBJ) $(LIB) -o $(TEST_BIN)
 ;./$(TEST_BIN)
 
 $(TEST_OBJ): $(TEST_SRC)
-;$(CC) $(CFLAGS) $(CHECK_CFLAGS) -c $< -o $@
+;$(CC) $(CFLAGS) -c $< -o $@
 
-gcov_report: CFLAGS += -fprofile-arcs -ftest-coverage $(CHECK_CFLAGS)
+gcov_report: CFLAGS += -fprofile-arcs -ftest-coverage
 gcov_report: clean $(LIB) $(TEST_OBJ)
-;$(CC) $(CFLAGS) $(TEST_OBJ) $(LIB) $(CHECK_LIBS) -o $(TEST_BIN)
+;$(CC) $(CFLAGS) $(TEST_OBJ) $(LIB) -o $(TEST_BIN)
 ;./$(TEST_BIN)
 ;gcov $(SRC_GAME)
 

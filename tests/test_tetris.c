@@ -1,6 +1,31 @@
-#include <check.h>
 #include <stdio.h>
 #include "../src/brick_game/tetris/tetris.h"
+
+// Minimal test framework ----------------------------------------------------
+static int tests_failed = 0;
+
+static void report_failure(const char *file, int line, const char *msg, int a,
+                           int b) {
+  fprintf(stderr, "%s:%d: %s (%d vs %d)\n", file, line, msg, a, b);
+  tests_failed++;
+}
+
+#define ck_assert_int_eq(a, b)                                                \
+  do {                                                                        \
+    int _a = (a), _b = (b);                                                   \
+    if (_a != _b)                                                             \
+      report_failure(__FILE__, __LINE__, #a " != " #b, _a, _b);              \
+  } while (0)
+
+#define ck_assert_int_le(a, b)                                                \
+  do {                                                                        \
+    int _a = (a), _b = (b);                                                   \
+    if (_a > _b)                                                              \
+      report_failure(__FILE__, __LINE__, #a " <= " #b, _a, _b);              \
+  } while (0)
+
+#define START_TEST(name) static void name(void)
+#define END_TEST
 
 // Helper to return the game to its initial state
 static void reset_state(void) {
@@ -126,27 +151,19 @@ START_TEST(level_and_speed) {
 }
 END_TEST
 
-Suite *tetris_suite(void) {
-  Suite *s = suite_create("tetris");
-  TCase *tc = tcase_create("core");
-  tcase_add_checked_fixture(tc, reset_state, NULL);
-  tcase_add_test(tc, start_and_spawn);
-  tcase_add_test(tc, move_and_rotate);
-  tcase_add_test(tc, line_clear);
-  tcase_add_test(tc, game_over_state);
-  tcase_add_test(tc, score_and_highscore);
-  tcase_add_test(tc, pause_functionality);
-  tcase_add_test(tc, level_and_speed);
-  suite_add_tcase(s, tc);
-  return s;
-}
-
 int main(void) {
-  Suite *s = tetris_suite();
-  SRunner *sr = srunner_create(s);
-  srunner_run_all(sr, CK_ENV);
-  int failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
-  return (failed == 0) ? 0 : 1;
+  start_and_spawn();
+  move_and_rotate();
+  line_clear();
+  game_over_state();
+  score_and_highscore();
+  pause_functionality();
+  level_and_speed();
+  if (tests_failed) {
+    fprintf(stderr, "%d test(s) failed\n", tests_failed);
+    return 1;
+  }
+  printf("All tests passed\n");
+  return 0;
 }
 
