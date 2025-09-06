@@ -12,6 +12,7 @@ static const char *score_file = "highscore.dat";
 static int base_fall_delay = 20;
 static int fall_delay = 20;
 static int fall_counter = 0;
+static const int level_speedup = 2;
 
 // Definitions of all tetromino shapes in 4 rotations
 static const int shapes[7][4][4][4] = {
@@ -75,7 +76,8 @@ static void copy_next_preview(void) {
 void setFallSpeed(int delay) {
   if (delay > 0) {
     base_fall_delay = delay;
-    fall_delay = base_fall_delay - (game.level > 0 ? game.level - 1 : 0);
+    fall_delay =
+        base_fall_delay - (game.level > 0 ? (game.level - 1) * level_speedup : 0);
     if (fall_delay < 1) fall_delay = 1;
   }
 }
@@ -114,7 +116,7 @@ static void update_level(void) {
   if (new_level > 10) new_level = 10;
   if (new_level != game.level) {
     game.level = new_level;
-    fall_delay = base_fall_delay - (game.level - 1);
+    fall_delay = base_fall_delay - (game.level - 1) * level_speedup;
     if (fall_delay < 1) fall_delay = 1;
     fall_counter = 0;
   }
