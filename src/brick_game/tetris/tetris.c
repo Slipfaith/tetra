@@ -9,6 +9,7 @@ static UserAction last_action = ACT_NONE;
 static GameState state = STATE_START;
 static int next_shape = 0;
 static const char *score_file = "highscore.dat";
+static int base_fall_delay = 20;
 static int fall_delay = 20;
 static int fall_counter = 0;
 
@@ -72,7 +73,11 @@ static void copy_next_preview(void) {
 }
 
 void setFallSpeed(int delay) {
-  if (delay > 0) fall_delay = delay;
+  if (delay > 0) {
+    base_fall_delay = delay;
+    fall_delay = base_fall_delay - (game.level > 0 ? game.level - 1 : 0);
+    if (fall_delay < 1) fall_delay = 1;
+  }
 }
 
 static void load_high_score(void) {
@@ -98,8 +103,21 @@ static void reset_game(void) {
   load_high_score();
   next_shape = 0;
   copy_next_preview();
+  game.level = 1;
+  fall_delay = base_fall_delay;
   fall_counter = 0;
   game.paused = 0;
+}
+
+static void update_level(void) {
+  int new_level = game.score / 600 + 1;
+  if (new_level > 10) new_level = 10;
+  if (new_level != game.level) {
+    game.level = new_level;
+    fall_delay = base_fall_delay - (game.level - 1);
+    if (fall_delay < 1) fall_delay = 1;
+    fall_counter = 0;
+  }
 }
 
 static int check_collision(int x, int y, int shape, int rot) {
@@ -212,6 +230,7 @@ static int clear_lines(void) {
 void userInput(UserAction action) { last_action = action; }
 
 GameInfo updateCurrentState(void) {
+  update_level();
   switch (state) {
     case STATE_START:
       if (last_action == ACT_START) {
