@@ -1,0 +1,13 @@
+# Doxyfile for tetra project
+
+PROJECT_NAME           = "Tetra"
+OUTPUT_DIRECTORY       = docs/doxygen
+
+INPUT                  = src docs README.md
+FILE_PATTERNS          = *.c *.h *.md
+RECURSIVE              = YES
+
+EXTRACT_ALL            = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+GENERATE_LATEX         = NO
+USE_MDFILE_AS_MAINPAGE = README.md
