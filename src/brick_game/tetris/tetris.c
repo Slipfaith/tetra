@@ -9,6 +9,8 @@ static UserAction last_action = ACT_NONE;
 static GameState state = STATE_START;
 static int next_shape = 0;
 static const char *score_file = "highscore.dat";
+static int fall_delay = 20;
+static int fall_counter = 0;
 
 // Definitions of all tetromino shapes in 4 rotations
 static const int shapes[7][4][4][4] = {
@@ -69,6 +71,10 @@ static void copy_next_preview(void) {
       game.next[i][j] = shapes[next_shape][0][i][j];
 }
 
+void setFallSpeed(int delay) {
+  if (delay > 0) fall_delay = delay;
+}
+
 static void load_high_score(void) {
   FILE *f = fopen(score_file, "r");
   if (f) {
@@ -92,6 +98,8 @@ static void reset_game(void) {
   load_high_score();
   next_shape = 0;
   copy_next_preview();
+  fall_counter = 0;
+  game.paused = 0;
 }
 
 static int check_collision(int x, int y, int shape, int rot) {
@@ -130,6 +138,7 @@ static void spawn_piece(void) {
   game.rotation = 0;
   game.current_x = FIELD_WIDTH / 2 - 2;
   game.current_y = 0;
+  fall_counter = 0;
   if (check_collision(game.current_x, game.current_y, game.current_shape, game.rotation)) {
     game.game_over = 1;
     state = STATE_GAMEOVER;
@@ -222,17 +231,45 @@ GameInfo updateCurrentState(void) {
       } else if (last_action == ACT_ROTATE) {
         try_rotate();
       } else if (last_action == ACT_DOWN) {
-        try_move(0, 1);
+        if (!try_move(0, 1)) {
+          place_piece();
+          clear_lines();
+          if (state != STATE_GAMEOVER) state = STATE_SPAWN;
+        }
+        fall_counter = 0;
+        break;
       } else if (last_action == ACT_DROP) {
         hard_drop();
+        clear_lines();
+        if (state != STATE_GAMEOVER) state = STATE_SPAWN;
+        fall_counter = 0;
+        break;
+      } else if (last_action == ACT_PAUSE) {
+        state = STATE_PAUSE;
+        break;
       } else if (last_action == ACT_QUIT) {
         game.game_over = 1;
         state = STATE_GAMEOVER;
+        break;
       }
-      if (!try_move(0, 1)) {
-        place_piece();
-        clear_lines();
-        if (state != STATE_GAMEOVER) state = STATE_SPAWN;
+
+      fall_counter++;
+      if (fall_counter >= fall_delay) {
+        if (!try_move(0, 1)) {
+          place_piece();
+          clear_lines();
+          if (state != STATE_GAMEOVER) state = STATE_SPAWN;
+        }
+        fall_counter = 0;
+      }
+      break;
+    case STATE_PAUSE:
+      if (last_action == ACT_PAUSE) {
+        state = STATE_MOVE;
+        fall_counter = 0;
+      } else if (last_action == ACT_QUIT) {
+        game.game_over = 1;
+        state = STATE_GAMEOVER;
       }
       break;
     case STATE_GAMEOVER:
@@ -243,6 +280,7 @@ GameInfo updateCurrentState(void) {
       }
       break;
   }
+  game.paused = (state == STATE_PAUSE);
   last_action = ACT_NONE;
   return game;
 }
