@@ -37,34 +37,49 @@ int main(void) {
   setFallSpeed(20);
   userInput(ACT_START);
   int quit_requested = 0;
+  int pause_pressed = 0;
   while (1) {
     int ch = getch();
     if (ch != ERR) {
       switch (ch) {
         case KEY_LEFT:
           userInput(ACT_LEFT);
+          pause_pressed = 0;
           break;
         case KEY_RIGHT:
           userInput(ACT_RIGHT);
+          pause_pressed = 0;
           break;
         case KEY_DOWN:
           userInput(ACT_DOWN);
+          pause_pressed = 0;
           break;
         case ' ':
           userInput(ACT_ROTATE);
+          pause_pressed = 0;
           break;
         case '\n':
           userInput(ACT_DROP);
+          pause_pressed = 0;
           break;
         case 'q':
           userInput(ACT_QUIT);
           quit_requested = 1;
+          pause_pressed = 0;
           break;
         case 'p':
         case 'P':
-          userInput(ACT_PAUSE);
+          if (!pause_pressed) {
+            userInput(ACT_PAUSE);
+            pause_pressed = 1;
+          }
+          break;
+        default:
+          pause_pressed = 0;
           break;
       }
+    } else {
+      pause_pressed = 0;
     }
     GameInfo g = updateCurrentState();
     draw_game(&g);
