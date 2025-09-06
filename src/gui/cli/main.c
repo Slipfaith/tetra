@@ -19,6 +19,7 @@ static void draw_game(const GameInfo *g) {
   }
   mvprintw(6, FIELD_WIDTH * 2 + 2, "Score: %d", g->score);
   mvprintw(7, FIELD_WIDTH * 2 + 2, "High: %d", g->high_score);
+  mvprintw(8, FIELD_WIDTH * 2 + 2, "Level: %d", g->level);
   if (g->game_over)
     mvprintw(FIELD_HEIGHT / 2, FIELD_WIDTH, "GAME OVER");
   else if (g->paused)
