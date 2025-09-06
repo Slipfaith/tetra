@@ -2,11 +2,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 static GameInfo game;
 static UserAction last_action = ACT_NONE;
 static GameState state = STATE_START;
 static int next_shape = 0;
+static const char *score_file = "highscore.dat";
 
 // Definitions of all tetromino shapes in 4 rotations
 static const int shapes[7][4][4][4] = {
@@ -67,8 +69,27 @@ static void copy_next_preview(void) {
       game.next[i][j] = shapes[next_shape][0][i][j];
 }
 
+static void load_high_score(void) {
+  FILE *f = fopen(score_file, "r");
+  if (f) {
+    if (fscanf(f, "%d", &game.high_score) != 1) game.high_score = 0;
+    fclose(f);
+  } else {
+    game.high_score = 0;
+  }
+}
+
+static void save_high_score(void) {
+  FILE *f = fopen(score_file, "w");
+  if (f) {
+    fprintf(f, "%d", game.high_score);
+    fclose(f);
+  }
+}
+
 static void reset_game(void) {
   memset(&game, 0, sizeof(game));
+  load_high_score();
   next_shape = 0;
   copy_next_preview();
 }
@@ -146,7 +167,8 @@ static void hard_drop(void) {
   place_piece();
 }
 
-static void clear_lines(void) {
+static int clear_lines(void) {
+  int cleared = 0;
   for (int i = FIELD_HEIGHT - 1; i >= 0; --i) {
     int full = 1;
     for (int j = 0; j < FIELD_WIDTH; ++j) {
@@ -156,12 +178,26 @@ static void clear_lines(void) {
       }
     }
     if (full) {
+      ++cleared;
       for (int k = i; k > 0; --k)
         memcpy(game.field[k], game.field[k - 1], sizeof(game.field[0]));
       memset(game.field[0], 0, sizeof(game.field[0]));
       i++;  // recheck same row after shifting
     }
   }
+  if (cleared == 1)
+    game.score += 100;
+  else if (cleared == 2)
+    game.score += 300;
+  else if (cleared == 3)
+    game.score += 700;
+  else if (cleared == 4)
+    game.score += 1500;
+  if (game.score > game.high_score) {
+    game.high_score = game.score;
+    save_high_score();
+  }
+  return cleared;
 }
 
 void userInput(UserAction action) { last_action = action; }

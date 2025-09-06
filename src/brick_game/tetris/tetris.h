@@ -36,6 +36,8 @@ typedef struct {
   int current_shape;
   int rotation;
   int game_over;  // 1 when game finished
+  int score;      // current score
+  int high_score; // maximum stored score
 } GameInfo;
 
 // Receive user input. The action will be processed on next updateCurrentState()
