@@ -1,132 +1,149 @@
-#include <assert.h>
+#include <check.h>
 #include <stdio.h>
 #include "../src/brick_game/tetris/tetris.h"
 
-void start_and_spawn(void) {
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_START); updateCurrentState();
-  GameInfo g = updateCurrentState();
-  assert(g.field[0][4] == 1);
-  assert(g.field[3][4] == 1);
+// Helper to return the game to its initial state
+static void reset_state(void) {
+  userInput(ACT_QUIT);
+  updateCurrentState();
+  userInput(ACT_QUIT);
+  updateCurrentState();
 }
 
-void move_and_rotate(void) {
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
+START_TEST(start_and_spawn) {
+  reset_state();
+  userInput(ACT_START);
+  GameInfo g = updateCurrentState();
+  ck_assert_int_eq(g.field[0][4], 1);
+  ck_assert_int_eq(g.field[3][4], 1);
+}
+END_TEST
+
+START_TEST(move_and_rotate) {
+  reset_state();
   userInput(ACT_START); updateCurrentState();
-  updateCurrentState();
   userInput(ACT_LEFT);
   GameInfo g = updateCurrentState();
-  assert(g.field[1][3] == 1);
+  ck_assert_int_eq(g.field[1][3], 1);
   userInput(ACT_ROTATE);
   g = updateCurrentState();
-  assert(g.field[1][2] == 1);
-  assert(g.field[1][5] == 1);
+  ck_assert_int_eq(g.field[1][2], 1);
+  ck_assert_int_eq(g.field[1][5], 1);
 }
+END_TEST
 
-void line_clear(void) {
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
+START_TEST(line_clear) {
+  reset_state();
   userInput(ACT_START); updateCurrentState();
-  updateCurrentState();
   GameInfo *gp = getGame();
-  for (int j = 0; j < FIELD_WIDTH; ++j) {
+  for (int j = 0; j < FIELD_WIDTH; ++j)
     if (j < 3 || j > 6) gp->field[FIELD_HEIGHT - 1][j] = 7;
-  }
-  userInput(ACT_ROTATE);
-  updateCurrentState();
+  userInput(ACT_ROTATE); updateCurrentState();
   userInput(ACT_DROP);
   GameInfo g = updateCurrentState();
   int empty = 1;
-  for (int j = 0; j < FIELD_WIDTH; ++j) empty &= (g.field[FIELD_HEIGHT - 1][j] == 0);
-  assert(empty == 1);
+  for (int j = 0; j < FIELD_WIDTH; ++j)
+    empty &= (g.field[FIELD_HEIGHT - 1][j] == 0);
+  ck_assert_int_eq(empty, 1);
 }
+END_TEST
 
-void game_over_state(void) {
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_START); updateCurrentState();  // move to spawn state
+START_TEST(game_over_state) {
+  reset_state();
+  userInput(ACT_START); updateCurrentState();
   GameInfo *gp = getGame();
   for (int j = 0; j < FIELD_WIDTH; ++j) gp->field[0][j] = 7;
   GameInfo g = updateCurrentState();
-  assert(g.game_over == 1);
+  ck_assert_int_eq(g.game_over, 1);
 }
+END_TEST
 
-void score_and_highscore(void) {
+START_TEST(score_and_highscore) {
+  reset_state();
   remove("highscore.dat");
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
   userInput(ACT_START); updateCurrentState();
-  updateCurrentState();
   GameInfo *gp = getGame();
-  for (int j = 0; j < FIELD_WIDTH; ++j) {
+  for (int j = 0; j < FIELD_WIDTH; ++j)
     if (j < 3 || j > 6) gp->field[FIELD_HEIGHT - 1][j] = 7;
-  }
-  userInput(ACT_ROTATE);
-  updateCurrentState();
+  userInput(ACT_ROTATE); updateCurrentState();
   userInput(ACT_DROP);
   GameInfo g = updateCurrentState();
-  assert(g.score == 100);
-  assert(g.high_score == 100);
+  ck_assert_int_eq(g.score, 100);
+  ck_assert_int_eq(g.high_score, 100);
   updateCurrentState();
   userInput(ACT_QUIT); updateCurrentState();
   userInput(ACT_START); updateCurrentState();
   g = updateCurrentState();
-  assert(g.score == 0);
-  assert(g.high_score == 100);
+  ck_assert_int_eq(g.score, 0);
+  ck_assert_int_eq(g.high_score, 100);
 }
+END_TEST
 
-void pause_functionality(void) {
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
+START_TEST(pause_functionality) {
+  reset_state();
   userInput(ACT_START); updateCurrentState();
-  updateCurrentState();
   GameInfo g = updateCurrentState();
   int x = g.current_x;
   int y = g.current_y;
   userInput(ACT_PAUSE); updateCurrentState();
-  userInput(ACT_LEFT); g = updateCurrentState();
-  assert(g.paused == 1);
-  assert(g.current_x == x && g.current_y == y);
+  userInput(ACT_LEFT);
+  g = updateCurrentState();
+  ck_assert_int_eq(g.paused, 1);
+  ck_assert_int_eq(g.current_x, x);
+  ck_assert_int_eq(g.current_y, y);
   userInput(ACT_PAUSE); updateCurrentState();
-  userInput(ACT_DOWN); g = updateCurrentState();
-  assert(g.paused == 0);
-  assert(g.current_y == y + 1);
+  userInput(ACT_DOWN);
+  g = updateCurrentState();
+  ck_assert_int_eq(g.paused, 0);
+  ck_assert_int_eq(g.current_y, y + 1);
 }
+END_TEST
 
-void level_and_speed(void) {
-  userInput(ACT_QUIT); updateCurrentState();
-  userInput(ACT_QUIT); updateCurrentState();
+START_TEST(level_and_speed) {
+  reset_state();
   userInput(ACT_START); updateCurrentState();
-  updateCurrentState();
   GameInfo *gp = getGame();
   int start_y = gp->current_y;
   for (int i = 0; i < 19; ++i) updateCurrentState();
   GameInfo g = *getGame();
-  assert(g.current_y == start_y);  // not enough ticks at level 1
+  ck_assert_int_eq(g.current_y, start_y);
 
   gp->score = 600;
   updateCurrentState();
   int y_after_level = gp->current_y;
   for (int i = 0; i < 18; ++i) updateCurrentState();
   g = *getGame();
-  assert(g.level == 2);
-  assert(g.current_y == y_after_level + 1);  // moved faster at level 2
+  ck_assert_int_eq(g.level, 2);
+  ck_assert_int_eq(g.current_y, y_after_level + 1);
 
-  gp->score = 6000;  // large score
+  gp->score = 6000;
   updateCurrentState();
   g = *getGame();
-  assert(g.level <= 10);  // level capped at 10
+  ck_assert_int_le(g.level, 10);
+}
+END_TEST
+
+Suite *tetris_suite(void) {
+  Suite *s = suite_create("tetris");
+  TCase *tc = tcase_create("core");
+  tcase_add_checked_fixture(tc, reset_state, NULL);
+  tcase_add_test(tc, start_and_spawn);
+  tcase_add_test(tc, move_and_rotate);
+  tcase_add_test(tc, line_clear);
+  tcase_add_test(tc, game_over_state);
+  tcase_add_test(tc, score_and_highscore);
+  tcase_add_test(tc, pause_functionality);
+  tcase_add_test(tc, level_and_speed);
+  suite_add_tcase(s, tc);
+  return s;
 }
 
 int main(void) {
-  start_and_spawn();
-  move_and_rotate();
-  line_clear();
-  game_over_state();
-  score_and_highscore();
-  pause_functionality();
-  level_and_speed();
-  return 0;
+  Suite *s = tetris_suite();
+  SRunner *sr = srunner_create(s);
+  srunner_run_all(sr, CK_ENV);
+  int failed = srunner_ntests_failed(sr);
+  srunner_free(sr);
+  return (failed == 0) ? 0 : 1;
 }
+
